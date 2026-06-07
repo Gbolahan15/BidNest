@@ -28,3 +28,9 @@ export const deleteHostel = (id) => API.delete(`/hostels/${id}/`);
 export const getMyListings = () => API.get("/hostels/my-listings/");
 
 export default API;
+
+// Bids
+export const placeBid = (data) => API.post("/bids/", data);
+export const getMyBids = () => API.get("/bids/my-bids/");
+export const getHostelBids = (hostelId) => API.get(`/bids/hostel/${hostelId}/`);
+export const respondToBid = (bidId, data) => API.put(`/bids/${bidId}/respond/`, data);

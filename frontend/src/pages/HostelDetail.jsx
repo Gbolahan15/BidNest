@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield } from "lucide-react";
-import { getHostel } from "../utils/api";
+import { getHostel, placeBid } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -41,7 +41,7 @@ export default function HostelDetail() {
     fetchHostel();
   }, [id]);
 
-  const handleBid = async (e) => {
+const handleBid = async (e) => {
     e.preventDefault();
     if (!user) {
       navigate("/login");
@@ -50,13 +50,21 @@ export default function HostelDetail() {
     setBidLoading(true);
     setBidError("");
     try {
-      // We'll connect this to the bids API next
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await placeBid({
+        hostel: id,
+        amount: bidAmount,
+        message: bidMessage,
+      });
       setBidSuccess(true);
       setBidAmount("");
       setBidMessage("");
     } catch (err) {
-      setBidError("Failed to place bid. Please try again.");
+      const data = err.response?.data;
+      if (data?.error) {
+        setBidError(data.error);
+      } else {
+        setBidError("Failed to place bid. Please try again.");
+      }
     } finally {
       setBidLoading(false);
     }
@@ -230,7 +238,7 @@ export default function HostelDetail() {
 
               {bidSuccess ? (
                 <div className="bg-green-50 text-green-600 px-4 py-4 rounded-xl text-sm text-center">
-                  🎉 Bid placed successfully! The landlord will review and respond shortly.
+                   Bid placed successfully! The landlord will review and respond shortly.
                 </div>
               ) : (
                 <form onSubmit={handleBid} className="space-y-4">
