@@ -70,7 +70,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': dj_database_url.config(
+    'default': dj_database_url.config()
         default=config('DATABASE_URL', default=f"postgresql://{config('DB_USER', default='postgres')}:{config('DB_PASSWORD', default='')}@{config('DB_HOST', default='localhost')}:{config('DB_PORT', default='5432')}/{config('DB_NAME', default='hostel_bidding')}")
     )
 }

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: "https://bidnest-n8qu.onrender.com/api",
 });
 
 // Automatically attach token to every request
