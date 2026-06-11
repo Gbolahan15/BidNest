@@ -33,4 +33,11 @@ export const getMyBids = () => API.get("/bids/my-bids/");
 export const getHostelBids = (hostelId) => API.get(`/bids/hostel/${hostelId}/`);
 export const respondToBid = (bidId, data) => API.put(`/bids/${bidId}/respond/`, data);
 
+// Roommates
+export const getRoommateGroups = (hostelId) => API.get("/roommates/", { params: { hostel: hostelId } });
+export const createRoommateGroup = (data) => API.post("/roommates/", data);
+export const joinRoommateGroup = (groupId) => API.post(`/roommates/${groupId}/join/`);
+export const respondToJoinRequest = (memberId, status) => API.put(`/roommates/requests/${memberId}/respond/`, { status });
+export const getMyRoommateGroups = () => API.get("/roommates/my-groups/");
+
 export default API;

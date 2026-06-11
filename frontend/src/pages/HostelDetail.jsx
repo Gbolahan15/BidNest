@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield } from "lucide-react";
-import { getHostel, placeBid } from "../utils/api";
+import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield, Users, Plus } from "lucide-react";
+import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -27,7 +27,13 @@ export default function HostelDetail() {
   const [bidSuccess, setBidSuccess] = useState(false);
   const [bidError, setBidError] = useState("");
 
-  useEffect(() => {
+  // Roommate states
+  const [roommateGroups, setRoommateGroups] = useState([]);
+  const [showRoommateForm, setShowRoommateForm] = useState(false);
+  const [roommateForm, setRoommateForm] = useState({ title: "", description: "", max_members: 2 });
+  const [roommateLoading, setRoommateLoading] = useState(false);
+
+useEffect(() => {
     const fetchHostel = async () => {
       try {
         const res = await getHostel(id);
@@ -39,7 +45,45 @@ export default function HostelDetail() {
       }
     };
     fetchHostel();
+    fetchRoommateGroups();
   }, [id]);
+
+  const fetchRoommateGroups = async () => {
+    try {
+      const res = await getRoommateGroups(id);
+      setRoommateGroups(res.data.results || res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateRoommateGroup = async (e) => {
+    e.preventDefault();
+    setRoommateLoading(true);
+    try {
+      await createRoommateGroup({ ...roommateForm, hostel: id });
+      setShowRoommateForm(false);
+      setRoommateForm({ title: "", description: "", max_members: 2 });
+      fetchRoommateGroups();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRoommateLoading(false);
+    }
+  };
+
+  const handleJoinGroup = async (groupId) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    try {
+      await joinRoommateGroup(groupId);
+      fetchRoommateGroups();
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to join group");
+    }
+  };
 
 const handleBid = async (e) => {
     e.preventDefault();
@@ -194,6 +238,114 @@ const handleBid = async (e) => {
                   <p className="text-sm text-gray-500 capitalize">{hostel.landlord?.role}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Roommate Finder */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <Users size={18} className="text-blue-600" />
+                  Roommate Groups
+                </h2>
+                {user && user.role === "student" && (
+                  <button
+                    onClick={() => setShowRoommateForm(!showRoommateForm)}
+                    className="flex items-center gap-1 text-blue-600 text-sm font-medium hover:underline"
+                  >
+                    <Plus size={16} />
+                    Create Group
+                  </button>
+                )}
+              </div>
+
+              {showRoommateForm && (
+                <form onSubmit={handleCreateRoommateGroup} className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Group title e.g. Looking for 1 roommate"
+                    value={roommateForm.title}
+                    onChange={(e) => setRoommateForm({ ...roommateForm, title: e.target.value })}
+                    required
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <textarea
+                    placeholder="Describe what you're looking for..."
+                    value={roommateForm.description}
+                    onChange={(e) => setRoommateForm({ ...roommateForm, description: e.target.value })}
+                    required
+                    rows={2}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-gray-600">Max members:</label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="10"
+                      value={roommateForm.max_members}
+                      onChange={(e) => setRoommateForm({ ...roommateForm, max_members: e.target.value })}
+                      className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={roommateLoading}
+                      className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      {roommateLoading ? "Creating..." : "Create"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRoommateForm(false)}
+                      className="border border-gray-200 text-gray-500 text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-50 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {roommateGroups.length === 0 ? (
+                <p className="text-gray-400 text-sm">No roommate groups yet. Be the first to create one!</p>
+              ) : (
+                <div className="space-y-3">
+                  {roommateGroups.map((group) => {
+                    const memberRecord = group.members.find((m) => m.student.id === user?.id);
+                    const isMember = memberRecord?.status === "accepted";
+                    const isPending = memberRecord?.status === "pending";
+                    return (
+                      <div key={group.id} className="border border-gray-100 rounded-xl p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium text-gray-800 text-sm">{group.title}</h3>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            group.is_full ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"
+                          }`}>
+                            {group.current_members_count}/{group.max_members} members
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-sm mb-2">{group.description}</p>
+                        <p className="text-gray-400 text-xs mb-3">Created by {group.created_by.full_name}</p>
+
+                        {!group.is_full && !isMember && !isPending && user?.role === "student" && (
+                          <button
+                            onClick={() => handleJoinGroup(group.id)}
+                            className="bg-blue-50 text-blue-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
+                          >
+                            Request to Join
+                          </button>
+                        )}
+                        {isMember && (
+                          <span className="text-green-600 text-xs font-medium">✓ You're a member</span>
+                        )}
+                        {isPending && (
+                          <span className="text-yellow-600 text-xs font-medium">⏳ Request pending approval</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Reviews */}

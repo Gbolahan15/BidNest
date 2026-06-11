@@ -20,7 +20,7 @@ class RoommateGroup(models.Model):
 
     @property
     def current_members_count(self):
-        return self.members.count()
+        return self.members.filter(status='accepted').count()
 
 
 class RoommateMember(models.Model):

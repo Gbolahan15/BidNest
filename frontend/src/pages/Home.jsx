@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Search, Shield, MessageCircle, Star } from "lucide-react";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 function FeatureCard({ icon, title, description }) {
   return (
@@ -15,6 +16,7 @@ function FeatureCard({ icon, title, description }) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -33,7 +35,7 @@ export default function Home() {
             <Link to="/hostels" className="bg-white text-blue-600 font-semibold px-8 py-3 rounded-xl hover:bg-blue-50 transition">
               Browse Hostels
             </Link>
-            <Link to="/register" className="border-2 border-white text-white font-semibold px-8 py-3 rounded-xl hover:bg-white hover:text-blue-600 transition">
+            <Link to={user ? "/dashboard" : "/register"} className="border-2 border-white text-white font-semibold px-8 py-3 rounded-xl hover:bg-white hover:text-blue-600 transition">
               List Your Hostel
             </Link>
           </div>
