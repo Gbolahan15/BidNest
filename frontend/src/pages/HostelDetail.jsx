@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield, Users, Plus } from "lucide-react";
-import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup } from "../utils/api";
+import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup, respondToJoinRequest } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -71,6 +71,14 @@ useEffect(() => {
       setRoommateLoading(false);
     }
   };
+  const handleRespondToJoin = async (memberId, status) => {
+      try {
+        await respondToJoinRequest(memberId, status);
+        fetchRoommateGroups();
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
   const handleJoinGroup = async (groupId) => {
     if (!user) {
@@ -341,6 +349,32 @@ const handleBid = async (e) => {
                         {isPending && (
                           <span className="text-yellow-600 text-xs font-medium">⏳ Request pending approval</span>
                         )}
+                        {/* Pending requests visible to group creator */}
+                        {group.created_by.id === user?.id && group.members.some(m => m.status === 'pending') && (
+                          <div className="mt-3 pt-3 border-t border-gray-50 space-y-2">
+                            <p className="text-xs font-medium text-gray-600">Pending requests:</p>
+                            {group.members.filter(m => m.status === 'pending').map((member) => (
+                              <div key={member.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                                <span className="text-sm text-gray-700">{member.student.full_name}</span>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleRespondToJoin(member.id, 'accepted')}
+                                    className="bg-green-600 text-white text-xs px-3 py-1 rounded-lg hover:bg-green-700 transition"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleRespondToJoin(member.id, 'rejected')}
+                                    className="bg-red-50 text-red-600 text-xs px-3 py-1 rounded-lg hover:bg-red-100 transition"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
                       </div>
                     );
                   })}
