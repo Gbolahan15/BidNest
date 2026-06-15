@@ -173,7 +173,7 @@ const handleBid = async (e) => {
                 <img
                   src={hostel.images[0].image}
                   alt={hostel.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-gray-50"
                 />
               ) : (
                 <Home size={64} className="text-blue-200" />
