@@ -26,6 +26,9 @@ export const createHostel = (data) => API.post("/hostels/", data);
 export const updateHostel = (id, data) => API.put(`/hostels/${id}/`, data);
 export const deleteHostel = (id) => API.delete(`/hostels/${id}/`);
 export const getMyListings = () => API.get("/hostels/my-listings/");
+export const uploadHostelImages = (hostelId, formData) => API.post(`/hostels/${hostelId}/images/`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Bids
 export const placeBid = (data) => API.post("/bids/", data);

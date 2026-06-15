@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel } from "../utils/api";
+import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages } from "../utils/api";
 import Navbar from "../components/Navbar";
 import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
@@ -114,6 +114,7 @@ function CreateListingForm({ onClose, onCreated }) {
     title: "", description: "", category: "self_contain",
     price: "", location: "", address: "", amenities: ""
   });
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -126,7 +127,20 @@ function CreateListingForm({ onClose, onCreated }) {
         .split(",")
         .map((a) => a.trim())
         .filter(Boolean);
-      await createHostel({ ...form, amenities: amenitiesArray });
+
+      const res = await createHostel({ ...form, amenities: amenitiesArray });
+      console.log("Hostel created:", res.data);
+      const hostelId = res.data.id;
+      console.log("Hostel ID:", hostelId);
+      
+      if (images.length > 0) {
+        const formData = new FormData();
+        images.forEach((img) => formData.append("images", img));
+        console.log("Uploading images to hostel:", hostelId);
+        const uploadRes = await uploadHostelImages(hostelId, formData);
+        console.log("Upload response:", uploadRes.data);
+      }
+
       onCreated();
       onClose();
     } catch (err) {
@@ -236,6 +250,22 @@ function CreateListingForm({ onClose, onCreated }) {
               onChange={(e) => setForm({ ...form, amenities: e.target.value })}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Hostel Images <span className="text-gray-400 font-normal">(optional, max 5)</span>
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setImages(Array.from(e.target.files).slice(0, 5))}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {images.length > 0 && (
+              <p className="text-xs text-gray-400 mt-1">{images.length} image(s) selected</p>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">

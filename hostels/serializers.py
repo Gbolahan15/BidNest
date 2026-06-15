@@ -39,9 +39,10 @@ class HostelCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hostel
         fields = [
-            'title', 'description', 'category', 'price',
+            'id','title', 'description', 'category', 'price',
             'location', 'address', 'latitude', 'longitude',
             'amenities']
+        read_only_fields = ['id']
 
     def create(self, validated_data):
         request = self.context.get('request')
