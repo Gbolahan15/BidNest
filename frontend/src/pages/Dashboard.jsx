@@ -298,6 +298,9 @@ function LandlordDashboard() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [respondingBid, setRespondingBid] = useState(null);
+  const [uploadingHostel, setUploadingHostel] = useState(null);
+  const [newImages, setNewImages] = useState([]);
+  const [addImagesLoading, setAddImagesLoading] = useState(false);
 
   const fetchListings = () => {
     getMyListings()
@@ -309,6 +312,24 @@ function LandlordDashboard() {
   useEffect(() => {
     fetchListings();
   }, []);
+
+  const handleAddImages = async (hostelId) => {
+    if (newImages.length === 0) return;
+    setAddImagesLoading(true);
+    try {
+      const formData = new FormData();
+      newImages.forEach((img) => formData.append("images", img));
+      await uploadHostelImages(hostelId, formData);
+      setUploadingHostel(null);
+      setNewImages([]);
+      fetchListings();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload images");
+    } finally {
+      setAddImagesLoading(false);
+    }
+  };
 
   const handleDeleteListing = async (hostelId) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
@@ -418,15 +439,53 @@ function LandlordDashboard() {
                     <span className="text-xs text-gray-400">Click to view bids</span>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteListing(hostel.id);
-                  }}
-                  className="mt-3 text-red-500 text-xs font-medium hover:underline"
-                >
-                  Delete Listing
-                </button>
+                <div className="flex gap-4 mt-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUploadingHostel(hostel.id);
+                    }}
+                    className="text-blue-600 text-xs font-medium hover:underline"
+                  >
+                    Add Images
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteListing(hostel.id);
+                    }}
+                    className="text-red-500 text-xs font-medium hover:underline"
+                  >
+                    Delete Listing
+                  </button>
+                </div>
+
+                {uploadingHostel === hostel.id && (
+                  <div onClick={(e) => e.stopPropagation()} className="mt-3 pt-3 border-t border-gray-50">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => setNewImages(Array.from(e.target.files).slice(0, 5))}
+                      className="w-full text-xs border border-gray-200 rounded-lg px-2 py-2 mb-2"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddImages(hostel.id)}
+                        disabled={addImagesLoading}
+                        className="bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                      >
+                        {addImagesLoading ? "Uploading..." : "Upload"}
+                      </button>
+                      <button
+                        onClick={() => setUploadingHostel(null)}
+                        className="border border-gray-200 text-gray-500 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}
