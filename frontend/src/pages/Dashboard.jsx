@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages } from "../utils/api";
+import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel } from "../utils/api";
 import Navbar from "../components/Navbar";
 import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
@@ -310,6 +310,21 @@ function LandlordDashboard() {
     fetchListings();
   }, []);
 
+  const handleDeleteListing = async (hostelId) => {
+    if (!window.confirm("Are you sure you want to delete this listing?")) return;
+    try {
+      await deleteHostel(hostelId);
+      fetchListings();
+      if (selectedHostel === hostelId) {
+        setSelectedHostel(null);
+        setBids([]);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete listing");
+    }
+  };
+
   const fetchBids = async (hostelId) => {
     setSelectedHostel(hostelId);
     try {
@@ -378,30 +393,40 @@ function LandlordDashboard() {
             </div>
           ) : (
             listings.map((hostel) => (
-              <div
+                <div
                 key={hostel.id}
-                onClick={() => fetchBids(hostel.id)}
                 className={`bg-white rounded-2xl border cursor-pointer transition p-6 ${
                   selectedHostel === hostel.id
                     ? "border-blue-500 shadow-md"
                     : "border-gray-100 hover:shadow-sm"
                 }`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-gray-800">{hostel.title}</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    hostel.status === "available"
-                      ? "bg-green-50 text-green-600"
-                      : "bg-red-50 text-red-600"
-                  }`}>
-                    {hostel.status}
-                  </span>
+                <div onClick={() => fetchBids(hostel.id)}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-gray-800">{hostel.title}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      hostel.status === "available"
+                        ? "bg-green-50 text-green-600"
+                        : "bg-red-50 text-red-600"
+                    }`}>
+                      {hostel.status}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-sm mb-2">{hostel.location}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-600 font-bold">₦{Number(hostel.price).toLocaleString()}</span>
+                    <span className="text-xs text-gray-400">Click to view bids</span>
+                  </div>
                 </div>
-                <p className="text-gray-500 text-sm mb-2">{hostel.location}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-blue-600 font-bold">₦{Number(hostel.price).toLocaleString()}</span>
-                  <span className="text-xs text-gray-400">Click to view bids</span>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteListing(hostel.id);
+                  }}
+                  className="mt-3 text-red-500 text-xs font-medium hover:underline"
+                >
+                  Delete Listing
+                </button>
               </div>
             ))
           )}
