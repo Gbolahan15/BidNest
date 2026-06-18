@@ -43,4 +43,10 @@ export const joinRoommateGroup = (groupId) => API.post(`/roommates/${groupId}/jo
 export const respondToJoinRequest = (memberId, status) => API.put(`/roommates/requests/${memberId}/respond/`, { status });
 export const getMyRoommateGroups = () => API.get("/roommates/my-groups/");
 
+// Messaging
+export const getConversations = () => API.get("/messages/");
+export const getOrCreateConversation = (userId) => API.get(`/messages/with/${userId}/`);
+export const getConversationMessages = (conversationId) => API.get(`/messages/${conversationId}/messages/`);
+export const sendMessage = (conversationId, content) => API.post(`/messages/${conversationId}/messages/`, { content });
+
 export default API;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield, Users, Plus } from "lucide-react";
+import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield, Users, Plus, MessageCircle } from "lucide-react";
 import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup, respondToJoinRequest } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
@@ -237,14 +237,25 @@ const handleBid = async (e) => {
             {/* Landlord Info */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
               <h2 className="font-semibold text-gray-800 mb-4">Listed by</h2>
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 text-blue-600 font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg">
-                  {hostel.landlord?.full_name?.charAt(0)}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 text-blue-600 font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg">
+                    {hostel.landlord?.full_name?.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800">{hostel.landlord?.full_name}</p>
+                    <p className="text-sm text-gray-500 capitalize">{hostel.landlord?.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-800">{hostel.landlord?.full_name}</p>
-                  <p className="text-sm text-gray-500 capitalize">{hostel.landlord?.role}</p>
-                </div>
+                {user && user.role === "student" && (
+                  <Link
+                    to={`/messages/${hostel.landlord?.id}`}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition"
+                  >
+                    <MessageCircle size={16} />
+                    Message
+                  </Link>
+                )}
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Hostels from "./pages/Hostels";
 import HostelDetail from "./pages/HostelDetail";
 import Dashboard from "./pages/Dashboard";
+import Messages from "./pages/Messages";
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -23,6 +24,16 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/hostels" element={<Hostels />} />
       <Route path="/hostels/:id" element={<HostelDetail />} />
+      <Route path="/messages" element={
+        <ProtectedRoute>
+          <Messages />
+        </ProtectedRoute>
+      } />
+      <Route path="/messages/:userId" element={
+        <ProtectedRoute>
+          <Messages />
+        </ProtectedRoute>
+      } />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
