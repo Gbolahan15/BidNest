@@ -137,4 +137,6 @@ STORAGES = {
     },
 }
 
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
