@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { loginUser } from "../utils/api";
+import { loginUser, googleAuth } from "../utils/api";
 import Navbar from "../components/Navbar";
+import { GoogleLogin } from "@react-oauth/google";
+import { googleAuth } from "../utils/api";
 
 export default function Login() {
   const { login } = useAuth();
@@ -95,6 +97,33 @@ export default function Login() {
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-gray-400 text-sm">OR</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const res = await googleAuth({ token: credentialResponse.credential });
+                  login(res.data.user, res.data.access, res.data.refresh);
+                  if (res.data.user.role === "landlord") {
+                    navigate("/dashboard");
+                  } else {
+                    navigate("/hostels");
+                  }
+                } catch (err) {
+                  setError("Google sign-in failed. Please try again.");
+                }
+              }}
+              onError={() => {
+                setError("Google sign-in failed. Please try again.");
+              }}
+            />
+          </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{" "}

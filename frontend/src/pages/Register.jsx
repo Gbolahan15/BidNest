@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { registerUser } from "../utils/api";
+import { registerUser, googleAuth } from "../utils/api";
 import Navbar from "../components/Navbar";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Register() {
   const { login } = useAuth();
@@ -152,6 +153,29 @@ export default function Register() {
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-gray-400 text-sm">OR</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const res = await googleAuth({ token: credentialResponse.credential, role: form.role });
+                  login(res.data.user, res.data.access, res.data.refresh);
+                  navigate("/");
+                } catch (err) {
+                  setError("Google sign-up failed. Please try again.");
+                }
+              }}
+              onError={() => {
+                setError("Google sign-up failed. Please try again.");
+              }}
+            />
+          </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}
