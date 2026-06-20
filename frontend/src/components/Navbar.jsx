@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LogOut, Home, Search, LayoutDashboard, MessageCircle } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -52,6 +53,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-sm font-medium text-gray-800">{user.full_name}</span>
                   <span className="text-xs text-blue-600 capitalize">{user.role}</span>

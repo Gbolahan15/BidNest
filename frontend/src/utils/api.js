@@ -50,4 +50,9 @@ export const getOrCreateConversation = (userId) => API.get(`/messages/with/${use
 export const getConversationMessages = (conversationId) => API.get(`/messages/${conversationId}/messages/`);
 export const sendMessage = (conversationId, content) => API.post(`/messages/${conversationId}/messages/`, { content });
 
+// Notifications
+export const getNotifications = () => API.get("/notifications/");
+export const markAsRead = (notificationId) => API.put(`/notifications/${notificationId}/read/`);
+export const markAllAsRead = () => API.put("/notifications/mark-all-read/");
+
 export default API;
