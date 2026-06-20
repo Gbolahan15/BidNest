@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Bid
 from .serializers import BidSerializer, BidCreateSerializer, BidRespondSerializer
 from hostels.models import Hostel
+from notifications.models import Notification
 
 
 class IsStudent(permissions.BasePermission):
@@ -22,7 +23,6 @@ class PlaceBidView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         hostel_id = request.data.get('hostel')
-        # Check if student already has a pending bid on this hostel
         existing = Bid.objects.filter(
             student=request.user,
             hostel_id=hostel_id,
@@ -33,8 +33,20 @@ class PlaceBidView(generics.CreateAPIView):
                 {'error': 'You already have a pending bid on this hostel'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return super().create(request, *args, **kwargs)
-        
+        response = super().create(request, *args, **kwargs)
+
+        # Create notification for landlord
+        hostel = Hostel.objects.get(id=hostel_id)
+        Notification.objects.create(
+            user=hostel.landlord,
+            type='new_bid',
+            title='New Bid Received',
+            message=f'{request.user.full_name} placed a bid of ₦{request.data.get("amount")} on {hostel.title}',
+            link=f'/dashboard'
+        )
+
+        return response
+
     def get_serializer_context(self):
         return {'request': self.request}
 
@@ -74,5 +86,22 @@ class RespondToBidView(APIView):
         serializer = BidRespondSerializer(bid, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+
+            # Notify student
+            status_messages = {
+                'accepted': ('Bid Accepted!', f'Your bid on {bid.hostel.title} was accepted!'),
+                'rejected': ('Bid Rejected', f'Your bid on {bid.hostel.title} was rejected.'),
+                'countered': ('Counter Offer Received', f'You received a counter offer on {bid.hostel.title}.'),
+            }
+            if bid.status in status_messages:
+                title, message = status_messages[bid.status]
+                Notification.objects.create(
+                    user=bid.student,
+                    type=f'bid_{bid.status}',
+                    title=title,
+                    message=message,
+                    link='/dashboard'
+                )
+
             return Response(BidSerializer(bid).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

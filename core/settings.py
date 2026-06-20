@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'bids',
     'roommates',
     'messaging',
+    'notifications',
 ]
 
 MIDDLEWARE = [
