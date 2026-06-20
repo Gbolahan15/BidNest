@@ -3,8 +3,8 @@ from rest_framework import generics, permissions, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Hostel, HostelImage, HostelReview
-from .serializers import HostelSerializer, HostelCreateSerializer, HostelImageSerializer, HostelReviewSerializer
+from .models import Hostel, HostelImage, HostelReview, Favorite
+from .serializers import HostelSerializer, HostelCreateSerializer, HostelImageSerializer, HostelReviewSerializer, FavoriteSerializer
 
 class IsLandlord(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -53,6 +53,9 @@ class HostelListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(location__icontains=location)
 
         return queryset
+    
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 
 # Get, update, delete a single hostel
@@ -76,6 +79,9 @@ class HostelDetailView(generics.RetrieveUpdateDestroyAPIView):
         if hostel.landlord != request.user:
             return Response({'error': 'You can only delete your own listings'}, status=status.HTTP_403_FORBIDDEN)
         return super().destroy(request, *args, **kwargs)
+
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 
 # Upload images to a hostel
@@ -120,3 +126,28 @@ class HostelReviewView(APIView):
             serializer.save(hostel=hostel, student=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ToggleFavoriteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            hostel = Hostel.objects.get(pk=pk)
+        except Hostel.DoesNotExist:
+            return Response({'error': 'Hostel not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        favorite = Favorite.objects.filter(student=request.user, hostel=hostel).first()
+        if favorite:
+            favorite.delete()
+            return Response({'favorited': False})
+        else:
+            Favorite.objects.create(student=request.user, hostel=hostel)
+            return Response({'favorited': True})
+
+
+class MyFavoritesView(generics.ListAPIView):
+    serializer_class = FavoriteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Favorite.objects.filter(student=self.request.user)

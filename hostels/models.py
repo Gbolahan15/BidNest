@@ -57,3 +57,16 @@ class HostelReview(models.Model):
 
     def __str__(self):
         return f"{self.student.full_name} reviewed {self.hostel.title}"
+    
+
+class Favorite(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    hostel = models.ForeignKey(Hostel, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'hostel')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student.full_name} ❤️ {self.hostel.title}"
