@@ -5,6 +5,7 @@ from django.db.models import Q
 from .models import Message, Conversation
 from .serializers import MessageSerializer, MessageCreateSerializer, ConversationSerializer
 from users.models import User
+from notifications.models import Notification
 
 
 class GetOrCreateConversationView(APIView):
@@ -76,6 +77,15 @@ class ConversationMessagesView(APIView):
 
         # Link message to conversation
         conversation.messages.add(message)
+
+        # Notify receiver
+        Notification.objects.create(
+            user=other_user,
+            type='new_message',
+            title='New Message',
+            message=f'{request.user.full_name} sent you a message',
+            link='/messages'
+        )
 
         serializer = MessageSerializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import RoommateGroup, RoommateMember
 from .serializers import RoommateGroupSerializer, RoommateGroupCreateSerializer
+from notifications.models import Notification
 
 
 class IsStudent(permissions.BasePermission):
@@ -52,6 +53,16 @@ class JoinRoommateGroupView(APIView):
             return Response({'error': 'You already requested to join this group'}, status=status.HTTP_400_BAD_REQUEST)
 
         RoommateMember.objects.create(group=group, student=request.user, status='pending')
+        
+        # Notify group creator
+        Notification.objects.create(
+            user=group.created_by,
+            type='roommate_request',
+            title='New Roommate Request',
+            message=f'{request.user.full_name} wants to join your group "{group.title}"',
+            link=f'/hostels/{group.hostel.id}'
+        )
+
         return Response({'message': 'Join request sent successfully'}, status=status.HTTP_201_CREATED)
 
 
@@ -80,6 +91,15 @@ class RespondToJoinRequestView(APIView):
         if accepted_count >= group.max_members:
             group.is_full = True
             group.save()
+
+        # Notify the student who requested
+        Notification.objects.create(
+            user=member.student,
+            type='roommate_response',
+            title=f'Roommate Request {new_status.capitalize()}',
+            message=f'Your request to join "{group.title}" was {new_status}',
+            link=f'/hostels/{group.hostel.id}'
+        )
 
         return Response({'message': f'Request {new_status}'})
 
