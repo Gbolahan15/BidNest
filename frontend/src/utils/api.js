@@ -55,4 +55,8 @@ export const getNotifications = () => API.get("/notifications/");
 export const markAsRead = (notificationId) => API.put(`/notifications/${notificationId}/read/`);
 export const markAllAsRead = () => API.put("/notifications/mark-all-read/");
 
+// Bookmarks or Favorites
+export const toggleFavorite = (hostelId) => API.post(`/hostels/${hostelId}/favorite/`);
+export const getMyFavorites = () => API.get("/hostels/my-favorites/");
+
 export default API;

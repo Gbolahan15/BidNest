@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel } from "../utils/api";
+import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel, getMyFavorites } from "../utils/api";
 import Navbar from "../components/Navbar";
-import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
+import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight, Heart } from "lucide-react";
 
 // ─── STUDENT DASHBOARD ───────────────────────────────────────
 function StudentDashboard() {
   const [bids, setBids] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("bids");
 
   useEffect(() => {
     getMyBids()
       .then((res) => setBids(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    getMyFavorites()
+      .then((res) => setFavorites(res.data))
+      .catch(console.error);
   }, []);
 
   const statusIcon = {
@@ -33,75 +39,145 @@ function StudentDashboard() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-6">My Bids</h2>
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b border-gray-100">
+        <button
+          onClick={() => setActiveTab("bids")}
+          className={`pb-3 text-sm font-medium transition border-b-2 ${
+            activeTab === "bids"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          My Bids
+        </button>
+        <button
+          onClick={() => setActiveTab("favorites")}
+          className={`pb-3 text-sm font-medium transition border-b-2 ${
+            activeTab === "favorites"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Saved Hostels ({favorites.length})
+        </button>
+      </div>
 
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
-              <div className="bg-gray-200 h-4 rounded w-1/2 mb-3" />
-              <div className="bg-gray-200 h-3 rounded w-1/3" />
+      {/* Favorites Tab */}
+      {activeTab === "favorites" && (
+        <div>
+          {favorites.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+              <Heart size={48} className="text-gray-200 mx-auto mb-4" />
+              <h3 className="text-gray-400 font-medium">No saved hostels yet</h3>
+              <p className="text-gray-300 text-sm mt-1 mb-4">Bookmark hostels you like while browsing</p>
+              <Link to="/hostels" className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
+                Browse Hostels
+              </Link>
             </div>
-          ))}
-        </div>
-      ) : bids.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-          <Home size={48} className="text-gray-200 mx-auto mb-4" />
-          <h3 className="text-gray-400 font-medium">No bids yet</h3>
-          <p className="text-gray-300 text-sm mt-1 mb-4">Start browsing hostels and place your first bid</p>
-          <Link to="/hostels" className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
-            Browse Hostels
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {bids.map((bid) => (
-            <div key={bid.id} className="bg-white rounded-2xl border border-gray-100 p-6">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-800">{bid.hostel.title}</h3>
-                  <p className="text-gray-500 text-sm">{bid.hostel.location}</p>
-                </div>
-                <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium capitalize ${statusStyle[bid.status]}`}>
-                  {statusIcon[bid.status]}
-                  {bid.status}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6 text-sm">
-                <div>
-                  <p className="text-gray-400">Your Bid</p>
-                  <p className="font-bold text-blue-600">₦{Number(bid.amount).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-400">Listed Price</p>
-                  <p className="font-medium text-gray-700">₦{Number(bid.hostel.price).toLocaleString()}</p>
-                </div>
-                {bid.counter_amount && (
-                  <div>
-                    <p className="text-gray-400">Counter Offer</p>
-                    <p className="font-bold text-green-600">₦{Number(bid.counter_amount).toLocaleString()}</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {favorites.map((fav) => (
+                <Link
+                  key={fav.id}
+                  to={`/hostels/${fav.hostel.id}`}
+                  className="bg-white rounded-2xl border border-gray-100 hover:shadow-md transition overflow-hidden"
+                >
+                  <div className="bg-blue-50 h-40 flex items-center justify-center">
+                    {fav.hostel.images && fav.hostel.images.length > 0 ? (
+                      <img
+                        src={fav.hostel.images[0].image}
+                        alt={fav.hostel.title}
+                        className="w-full h-full object-contain bg-gray-50"
+                      />
+                    ) : (
+                      <Home size={36} className="text-blue-200" />
+                    )}
                   </div>
-                )}
-              </div>
-
-              {bid.message && (
-                <p className="text-gray-400 text-sm mt-3 italic">"{bid.message}"</p>
-              )}
-              {bid.counter_message && (
-                <p className="text-green-600 text-sm mt-2 italic">Landlord: "{bid.counter_message}"</p>
-              )}
-
-              <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
-                <p className="text-xs text-gray-300">
-                  {new Date(bid.created_at).toLocaleDateString()}
-                </p>
-                <Link to={`/hostels/${bid.hostel.id}`} className="text-blue-600 text-sm hover:underline">
-                  View Hostel →
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-800 mb-1">{fav.hostel.title}</h3>
+                    <p className="text-gray-500 text-sm mb-2">{fav.hostel.location}</p>
+                    <p className="text-blue-600 font-bold">₦{Number(fav.hostel.price).toLocaleString()}</p>
+                  </div>
                 </Link>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+      )}
+
+      {/* Bids Tab */}
+      {activeTab === "bids" && (
+        <div>
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+                  <div className="bg-gray-200 h-4 rounded w-1/2 mb-3" />
+                  <div className="bg-gray-200 h-3 rounded w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : bids.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+              <Home size={48} className="text-gray-200 mx-auto mb-4" />
+              <h3 className="text-gray-400 font-medium">No bids yet</h3>
+              <p className="text-gray-300 text-sm mt-1 mb-4">Start browsing hostels and place your first bid</p>
+              <Link to="/hostels" className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition">
+                Browse Hostels
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {bids.map((bid) => (
+                <div key={bid.id} className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{bid.hostel.title}</h3>
+                      <p className="text-gray-500 text-sm">{bid.hostel.location}</p>
+                    </div>
+                    <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium capitalize ${statusStyle[bid.status]}`}>
+                      {statusIcon[bid.status]}
+                      {bid.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-6 text-sm">
+                    <div>
+                      <p className="text-gray-400">Your Bid</p>
+                      <p className="font-bold text-blue-600">₦{Number(bid.amount).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400">Listed Price</p>
+                      <p className="font-medium text-gray-700">₦{Number(bid.hostel.price).toLocaleString()}</p>
+                    </div>
+                    {bid.counter_amount && (
+                      <div>
+                        <p className="text-gray-400">Counter Offer</p>
+                        <p className="font-bold text-green-600">₦{Number(bid.counter_amount).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {bid.message && (
+                    <p className="text-gray-400 text-sm mt-3 italic">"{bid.message}"</p>
+                  )}
+                  {bid.counter_message && (
+                    <p className="text-green-600 text-sm mt-2 italic">Landlord: "{bid.counter_message}"</p>
+                  )}
+
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-xs text-gray-300">
+                      {new Date(bid.created_at).toLocaleDateString()}
+                    </p>
+                    <Link to={`/hostels/${bid.hostel.id}`} className="text-blue-600 text-sm hover:underline">
+                      View Hostel →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

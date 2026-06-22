@@ -1,23 +1,50 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, MapPin, Filter, Home } from "lucide-react";
-import { getHostels } from "../utils/api";
+import { Search, MapPin, Filter, Home, Heart } from "lucide-react";
+import { getHostels, toggleFavorite } from "../utils/api";
 import Navbar from "../components/Navbar";
 
-function HostelCard({ hostel }) {
+function HostelCard({ hostel, onToggleFavorite }) {
+  const [isFavorited, setIsFavorited] = useState(hostel.is_favorited);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  const handleFavoriteClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavoriteLoading(true);
+    try {
+      const res = await toggleFavorite(hostel.id);
+      setIsFavorited(res.data.favorited);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
   return (
     <Link to={`/hostels/${hostel.id}`} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition overflow-hidden">
       {/* Image */}
-      <div className="bg-blue-50 h-48 flex items-center justify-center">
+      <div className="bg-blue-50 h-48 flex items-center justify-center relative">
         {hostel.images && hostel.images.length > 0 ? (
           <img
             src={hostel.images[0].image}
             alt={hostel.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-gray-50"
           />
         ) : (
           <Home size={48} className="text-blue-200" />
         )}
+        <button
+          onClick={handleFavoriteClick}
+          disabled={favoriteLoading}
+          className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-sm hover:scale-110 transition"
+        >
+          <Heart
+            size={18}
+            className={isFavorited ? "fill-red-500 text-red-500" : "text-gray-400"}
+          />
+        </button>
       </div>
 
       {/* Content */}
