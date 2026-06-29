@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MapPin, Home, Star, ArrowLeft, Wifi, Zap, Droplets, Shield, Users, Plus, MessageCircle } from "lucide-react";
-import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup, respondToJoinRequest } from "../utils/api";
+import { getHostel, placeBid, getRoommateGroups, createRoommateGroup, joinRoommateGroup, respondToJoinRequest, submitReview } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
@@ -32,6 +32,11 @@ export default function HostelDetail() {
   const [showRoommateForm, setShowRoommateForm] = useState(false);
   const [roommateForm, setRoommateForm] = useState({ title: "", description: "", max_members: 2 });
   const [roommateLoading, setRoommateLoading] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
 useEffect(() => {
     const fetchHostel = async () => {
@@ -79,6 +84,24 @@ useEffect(() => {
         console.error(err);
       }
     };
+
+  const handleSubmitReview = async () => {
+    if (!reviewRating) return;
+    setReviewLoading(true);
+    setReviewError("");
+    try {
+      await submitReview(id, { rating: reviewRating, comment: reviewComment });
+      setReviewSuccess(true);
+      setReviewRating(0);
+      setReviewComment("");
+      const res = await getHostel(id);
+      setHostel(res.data);
+    } catch (err) {
+      setReviewError(err.response?.data?.detail || "Failed to submit review. You may have already reviewed this hostel.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
 
   const handleJoinGroup = async (groupId) => {
     if (!user) {
@@ -395,32 +418,84 @@ const handleBid = async (e) => {
 
             {/* Reviews */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="font-semibold text-gray-800 mb-4">
-                Reviews {hostel.average_rating && (
-                  <span className="text-yellow-500 ml-2 flex items-center gap-1 inline-flex">
+              <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                Reviews
+                {hostel.average_rating && (
+                  <span className="text-yellow-500 flex items-center gap-1 text-sm">
                     <Star size={16} fill="currentColor" />
                     {hostel.average_rating}
                   </span>
                 )}
               </h2>
+
+              {/* Add Review Form */}
+              {user && user.role === "student" && (
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h3 className="font-medium text-gray-700 text-sm mb-3">Write a Review</h3>
+                  <div className="flex gap-1 mb-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="transition hover:scale-110"
+                      >
+                        <Star
+                          size={24}
+                          className={star <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your experience with this hostel..."
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"
+                  />
+                  {reviewError && (
+                    <p className="text-red-500 text-xs mb-2">{reviewError}</p>
+                  )}
+                  {reviewSuccess && (
+                    <p className="text-green-500 text-xs mb-2">Review submitted successfully!</p>
+                  )}
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={reviewLoading || !reviewRating}
+                    className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    {reviewLoading ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              )}
+
+              {/* Reviews List */}
               {hostel.reviews && hostel.reviews.length > 0 ? (
                 <div className="space-y-4">
                   {hostel.reviews.map((review) => (
                     <div key={review.id} className="border-b border-gray-50 pb-4 last:border-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-800 text-sm">{review.student.full_name}</span>
-                        <div className="flex text-yellow-400">
-                          {[...Array(review.rating)].map((_, i) => (
-                            <Star key={i} size={12} fill="currentColor" />
-                          ))}
+                        <div className="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                          {review.student.full_name.charAt(0)}
                         </div>
+                        <div>
+                          <p className="font-medium text-gray-800 text-sm">{review.student.full_name}</p>
+                          <div className="flex text-yellow-400">
+                            {[...Array(review.rating)].map((_, i) => (
+                              <Star key={i} size={12} fill="currentColor" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-gray-300 text-xs ml-auto">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-gray-500 text-sm">{review.comment}</p>
+                      <p className="text-gray-500 text-sm mt-2">{review.comment}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm">No reviews yet.</p>
+                <p className="text-gray-400 text-sm">No reviews yet. Be the first to review!</p>
               )}
             </div>
           </div>
