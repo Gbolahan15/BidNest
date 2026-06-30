@@ -49,10 +49,12 @@ class InitiatePaymentView(APIView):
             "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
             "Content-Type": "application/json",
         }
+        frontend_url = "https://bidnest-hostel.vercel.app"
         payload = {
             "email": request.user.email,
             "amount": int(float(amount) * 100),  # Paystack uses kobo
             "reference": reference,
+            "callback_url": f"{frontend_url}/payment/callback",
             "metadata": {
                 "booking_id": booking.id,
                 "hostel_title": bid.hostel.title,
