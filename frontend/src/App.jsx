@@ -7,6 +7,7 @@ import Hostels from "./pages/Hostels";
 import HostelDetail from "./pages/HostelDetail";
 import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
+import PaymentCallback from "./pages/PaymentCallback";
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -32,6 +33,11 @@ export default function App() {
       <Route path="/messages/:userId" element={
         <ProtectedRoute>
           <Messages />
+        </ProtectedRoute>
+      } />
+      <Route path="/payment/callback" element={
+        <ProtectedRoute>
+          <PaymentCallback />
         </ProtectedRoute>
       } />
       <Route path="/dashboard" element={

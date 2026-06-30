@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel, getMyFavorites } from "../utils/api";
+import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel, getMyFavorites, initiatePayment } from "../utils/api";
 import Navbar from "../components/Navbar";
 import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight, Heart } from "lucide-react";
 
@@ -11,6 +11,7 @@ function StudentDashboard() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("bids");
+  const [payingBidId, setPayingBidId] = useState(null);
 
   useEffect(() => {
     getMyBids()
@@ -22,6 +23,18 @@ function StudentDashboard() {
       .then((res) => setFavorites(res.data))
       .catch(console.error);
   }, []);
+
+  const handlePayNow = async (bidId) => {
+    setPayingBidId(bidId);
+    try {
+      const res = await initiatePayment(bidId);
+      window.location.href = res.data.authorization_url;
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to initiate payment");
+    } finally {
+      setPayingBidId(null);
+    }
+  };
 
   const statusIcon = {
     pending: <Clock size={16} className="text-yellow-500" />,
@@ -164,6 +177,16 @@ function StudentDashboard() {
                   )}
                   {bid.counter_message && (
                     <p className="text-green-600 text-sm mt-2 italic">Landlord: "{bid.counter_message}"</p>
+                  )}
+
+                  {(bid.status === "accepted" || bid.status === "countered") && (
+                    <button
+                      onClick={() => handlePayNow(bid.id)}
+                      disabled={payingBidId === bid.id}
+                      className="w-full bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition mt-3 disabled:opacity-50"
+                    >
+                      {payingBidId === bid.id ? "Processing..." : `Pay Now - ₦${Number(bid.counter_amount || bid.amount).toLocaleString()}`}
+                    </button>
                   )}
 
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">

@@ -62,4 +62,9 @@ export const getMyFavorites = () => API.get("/hostels/my-favorites/");
 // Reviews
 export const submitReview = (hostelId, data) => API.post(`/hostels/${hostelId}/reviews/`, data);
 
+// Payments
+export const initiatePayment = (bidId) => API.post("/payments/initiate/", { bid_id: bidId });
+export const verifyPayment = (reference) => API.post("/payments/verify/", { reference });
+export const getMyBookings = () => API.get("/payments/my-bookings/");
+
 export default API;
