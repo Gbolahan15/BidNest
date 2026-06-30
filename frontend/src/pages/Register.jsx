@@ -108,37 +108,15 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I want to</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, role: "student" })}
-                  className={`flex flex-col items-center gap-2 border-2 rounded-xl px-4 py-4 transition ${
-                    form.role === "student"
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <Search size={22} className={form.role === "student" ? "text-blue-600" : "text-gray-400"} />
-                  <span className={`text-sm font-medium ${form.role === "student" ? "text-blue-600" : "text-gray-600"}`}>
-                    Find a Hostel
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, role: "landlord" })}
-                  className={`flex flex-col items-center gap-2 border-2 rounded-xl px-4 py-4 transition ${
-                    form.role === "landlord"
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <Home size={22} className={form.role === "landlord" ? "text-blue-600" : "text-gray-400"} />
-                  <span className={`text-sm font-medium ${form.role === "landlord" ? "text-blue-600" : "text-gray-600"}`}>
-                    List a Hostel
-                  </span>
-                </button>
-              </div>
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="student">Student</option>
+                <option value="landlord">Landlord / Agent</option>
+              </select>
             </div>
 
             <div>
