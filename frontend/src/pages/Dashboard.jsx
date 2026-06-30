@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel, getMyFavorites, initiatePayment } from "../utils/api";
+import { getMyListings, getMyBids, getHostelBids, respondToBid, createHostel, uploadHostelImages, deleteHostel, getMyFavorites, initiatePayment, getMyBookings } from "../utils/api";
 import Navbar from "../components/Navbar";
 import { Home, Plus, Clock, CheckCircle, XCircle, ArrowRight, Heart } from "lucide-react";
 
@@ -12,6 +12,7 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("bids");
   const [payingBidId, setPayingBidId] = useState(null);
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     getMyBids()
@@ -21,6 +22,10 @@ function StudentDashboard() {
 
     getMyFavorites()
       .then((res) => setFavorites(res.data))
+      .catch(console.error);
+
+    getMyBookings()
+      .then((res) => setBookings(res.data))
       .catch(console.error);
   }, []);
 
@@ -179,15 +184,32 @@ function StudentDashboard() {
                     <p className="text-green-600 text-sm mt-2 italic">Landlord: "{bid.counter_message}"</p>
                   )}
 
-                  {(bid.status === "accepted" || bid.status === "countered") && (
-                    <button
-                      onClick={() => handlePayNow(bid.id)}
-                      disabled={payingBidId === bid.id}
-                      className="w-full bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition mt-3 disabled:opacity-50"
-                    >
-                      {payingBidId === bid.id ? "Processing..." : `Pay Now - ₦${Number(bid.counter_amount || bid.amount).toLocaleString()}`}
-                    </button>
-                  )}
+                  {(() => {
+                    const booking = bookings.find((b) => b.bid === bid.id);
+                    const isPaid = booking?.payment_status === "paid";
+
+                    if (isPaid) {
+                      return (
+                        <div className="bg-green-50 text-green-600 text-sm font-medium py-2.5 rounded-xl text-center mt-3">
+                          ✓ Paid - Booking Confirmed
+                        </div>
+                      );
+                    }
+
+                    if (bid.status === "accepted" || bid.status === "countered") {
+                      return (
+                        <button
+                          onClick={() => handlePayNow(bid.id)}
+                          disabled={payingBidId === bid.id}
+                          className="w-full bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition mt-3 disabled:opacity-50"
+                        >
+                          {payingBidId === bid.id ? "Processing..." : `Pay Now - ₦${Number(bid.counter_amount || bid.amount).toLocaleString()}`}
+                        </button>
+                      );
+                    }
+
+                    return null;
+                  })()}
 
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
                     <p className="text-xs text-gray-300">
