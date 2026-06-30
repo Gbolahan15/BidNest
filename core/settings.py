@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'roommates',
     'messaging',
     'notifications',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -139,5 +140,8 @@ STORAGES = {
 }
 
 GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
+
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
+PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', default='')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
